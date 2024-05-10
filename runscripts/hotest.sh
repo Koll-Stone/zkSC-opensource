@@ -1,0 +1,1 @@
+cargo test --package zkcreds --lib --release -- zk_akkh::test::run_test_handover --exact --nocapture
