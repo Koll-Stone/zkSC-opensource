@@ -11,6 +11,6 @@ cd zkcreds-rs
 ```
 or
 ```
-./runscripts/acptest.sh
+./runscripts/hoptest.sh
 ```
 The end to end simulation latency will be written to .csv files in the ```zkcreds-rs``` folder.
