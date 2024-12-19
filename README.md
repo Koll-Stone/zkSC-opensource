@@ -6,7 +6,7 @@ Communication using Zero Knowledge Proof"</font>
 
 To run the code (rust/cargo must be installed):
 ```
-cd ZKSC-OPENSOURCE
+cd zkSC-OPENSOURCE
 ./runscripts/actest.sh
 ```
 or
