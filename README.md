@@ -6,11 +6,11 @@ Communication using Zero Knowledge Proof"</font>
 
 To run the code (rust/cargo must be installed):
 ```
-cd zkcreds-rs
-./runscripts/acptest.sh
+cd ZKSC-OPENSOURCE
+./runscripts/actest.sh
 ```
 or
 ```
-./runscripts/hoptest.sh
+./runscripts/hotest.sh
 ```
 The end to end simulation latency will be written to .csv files in the ```zkcreds-rs``` folder.
