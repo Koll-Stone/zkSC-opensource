@@ -90,6 +90,9 @@ where
     pub i_b: H::Output,
     pub ik1: u8,
     pub ik2: H::Output,
+    // New add time period
+    pub tp: H::Output,
+    pub temp_hash: H::Output,
     
     pub _marker: PhantomData<(ConstraintF, AC, ACG, H, HG, HG)>,
 }
@@ -117,6 +120,9 @@ ZkacProver<BlsFr, Bls12PoseidonCommitter, Bls12PoseidonCommitter, Bls12PoseidonC
         ik1: 9_u8,
         ik2: Default::default(), // k2
         _marker: PhantomData,
+        // New add tp
+        tp: Default::default(),
+        temp_hash: Default::default(),
     };
     return circuit;
 }
@@ -131,6 +137,8 @@ pub struct ZkacproverWithValue {
     ths_input: Fp256<FrParameters>,
     res1_input: Vec<Fp256<FrParameters>>,
     res2_input: Vec<Fp256<FrParameters>>,
+    tp_input: Vec<Fp256<FrParameters>>,
+    temp_input: Vec<Fp256<FrParameters>>,
 }
 
 pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
@@ -157,12 +165,20 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
     let i_b = hasher.hash(&public_num.to_field_elements().unwrap()).unwrap(); // a random B in Fp256 which can be regarded as hash of the B used in DH that usually belongs to a larger field than Fp256.
     let input2: Vec<u8> = vec![9_u8]; // a random value for k1
     let hash_ik1 = <Bls12PoseidonCommitter as CommitmentScheme>::commit(&(), &input2, &nonce).unwrap();
+    
+    // User a random value to act as the tp
+    let input4 : Vec<u8> = vec![8_u8];
+    let tp = hasher.hash(&input4.to_field_elements().unwrap()).unwrap();
+
     // let hash_ik1 = hasher.hash(&input2.to_field_elements().unwrap()).unwrap();
     let input3: Vec<u8> = vec![200,200,200,200,200]; // a random value for k2
     let ik2 = hasher.hash(&input3.to_field_elements().unwrap()).unwrap();
 
-    let res1 = <Bls12PoseidonCrh as TwoToOneCRH>::evaluate(&(), &to_bytes!(hattr).unwrap(),&to_bytes!(hash_ik1).unwrap()).unwrap();
+    // Compute hash(attr, tp)
+    let temp_hash = <Bls12PoseidonCrh as TwoToOneCRH>::evaluate(&(), &to_bytes!(hattr).unwrap(),&to_bytes!(tp).unwrap()).unwrap();
+    let res1 = <Bls12PoseidonCrh as TwoToOneCRH>::evaluate(&(), &to_bytes!(temp_hash).unwrap(),&to_bytes!(hash_ik1).unwrap()).unwrap();
     let res2 = <Bls12PoseidonCrh as TwoToOneCRH>::evaluate(&(), &to_bytes!(i_b).unwrap(),&to_bytes!(ik2).unwrap()).unwrap();
+    
 
     let leaf_idx = 9;
     let mut tree1 = ComTree::<_, Bls12PoseidonCrh,Bls12PoseidonCommitter>::empty((), TREE_HEIGHT);
@@ -197,6 +213,8 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
         i_b: i_b,
         ik1: 9_u8,
         ik2: ik2,
+        tp: tp,
+        temp_hash: temp_hash,
 
         _marker: PhantomData,
     };
@@ -206,6 +224,7 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
     let ths_input = Fp256::from(10_u8);
     let res1_input = res1.to_field_elements().unwrap();
     let res2_input = res2.to_field_elements().unwrap();
+    let temp_input = temp_hash.to_field_elements().unwrap();
     let mut tmp = res1_input.clone();
     tmp.clear();
     for i in 0..ATTRLEN {
@@ -213,6 +232,8 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
         tmp.push(x);
     }
     let acpolicy_input = tmp;
+    // Add tp input
+    let tp_input = tp.to_field_elements().unwrap();
 
     ZkacproverWithValue {
         circuit: prover, 
@@ -222,6 +243,8 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
         all_roots_input: all_roots,
         res1_input: res1_input, 
         res2_input: res2_input,
+        tp_input: tp_input,
+        temp_input: temp_input,
     }
 }
 
@@ -251,6 +274,9 @@ where
             let y = HG::OutputVar::new_input(ns!(cs, "all roots component"), || Ok(self.all_roots[i].clone()))?;
             all_roots_var.push(y);
         }
+        
+        let temp_var = HG::OutputVar::new_input(ns!(cs, "temp var"), || Ok(self.temp_hash.clone()))?;
+        let tp_var = HG::OutputVar::new_input(ns!(cs, "tp var"), || Ok(self.tp.clone()))?;
         let res1_var = HG::OutputVar::new_input(ns!(cs, "res1 var"), || Ok(self.res1.clone()))?;
         let res2_var = HG::OutputVar::new_input(ns!(cs, "res2 var"), || Ok(self.res2.clone()))?;
 
@@ -298,6 +324,7 @@ where
         ik1_var.enforce_cmp(&ths_var, Ordering::Less,true)?;
         let hash_of_ik1 = <ACG as CommitmentGadget<AC, ConstraintF>>::commit(&commit_param_var, &ik1_u8_var, &nonce_var).unwrap();
 
+        
 
         let auth_path_hattr = self.hattr_auth_path.clone().unwrap_or_else(|| default_auth_path::<AC, H>(self.height_hattr));
         let path_hattr_var = SparseMerkleTreePathVar::<_, IdentityCRHGadget, HG, _>::new_witness(
@@ -314,11 +341,16 @@ where
             &leaf_hattr_var,
         )?;
 
-        let tmp1 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &hash_of_attr.to_bytes().unwrap(), &hash_of_ik1.to_bytes().unwrap()).unwrap();
-        tmp1.enforce_equal(&res1_var)?;
+        let tmp1 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &hash_of_attr.to_bytes().unwrap(), &tp_var.to_bytes().unwrap()).unwrap();
+        tmp1.enforce_equal(&temp_var)?;
+    
+        let tmp2 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &temp_var.to_bytes().unwrap(), &hash_of_ik1.to_bytes().unwrap()).unwrap();
+        tmp2.enforce_equal(&res1_var)?;
 
-        let tmp2 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &i_b_var.to_bytes().unwrap(), &ik2_var.to_bytes().unwrap()).unwrap();
-        tmp2.enforce_equal(&res2_var)?;
+        let tmp3 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &i_b_var.to_bytes().unwrap(), &ik2_var.to_bytes().unwrap()).unwrap();
+        tmp3.enforce_equal(&res2_var)?;
+
+        
 
         let mut is_member = Boolean::FALSE;
         for root in all_roots_var {
@@ -382,7 +414,7 @@ pub fn runzkactest(public_num: Vec<u8>) -> (bool, Duration) {
     let zkacwithvalue = get_zkacprover_with_value(public_num);
     let mut all_inputs = zkacwithvalue.acpolicy_input;
     all_inputs.push(zkacwithvalue.ths_input);
-    all_inputs = [all_inputs, zkacwithvalue.all_roots_input, zkacwithvalue.res1_input, zkacwithvalue.res2_input].concat();
+    all_inputs = [all_inputs, zkacwithvalue.all_roots_input, zkacwithvalue.res1_input, zkacwithvalue.res2_input, zkacwithvalue.tp_input, zkacwithvalue.temp_input].concat();
     // let mut start = Instant::now();
     // let proof = groth16::create_random_proof(zkacwithvalue.circuit, &pk, &mut rng).unwrap();
     // let duration = start.elapsed();

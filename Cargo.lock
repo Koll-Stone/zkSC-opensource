@@ -1070,7 +1070,7 @@ checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 [[package]]
 name = "linkg16"
 version = "0.1.0"
-source = "git+ssh://git@github.com/rozbb/linkg16?rev=a405a8501c9fa1b69f6ec1c9e39fb6885dc74233#a405a8501c9fa1b69f6ec1c9e39fb6885dc74233"
+source = "git+https://github.com/rozbb/linkg16.git?rev=a405a8501c9fa1b69f6ec1c9e39fb6885dc74233#a405a8501c9fa1b69f6ec1c9e39fb6885dc74233"
 dependencies = [
  "ark-ec",
  "ark-ff",
