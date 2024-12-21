@@ -49,8 +49,17 @@ pub fn test_aka() {
     } else {
         println!("The ac proof is invalid");
     }
-    println!("the proof time taken is {:?} from 50 times running", proof_time);
-    println!("the verify time taken is {:?} from 50 times running", verify_time);
+    println!("the ac proof time taken is {:?} from 50 times running", proof_time);
+    println!("the ac verify time taken is {:?} from 50 times running", verify_time);
+
+    (vres, proof_time, verify_time) = zk_ka::runzkkatest(ue_public_num.to_bytes().to_vec());
+    if vres {
+                
+    } else {
+        println!("The ac proof is invalid");
+    }
+    println!("the ka proof time taken is {:?} from 50 times running", proof_time);
+    println!("the ka verify time taken is {:?} from 50 times running", verify_time);
 
     // let mut f_end_to_end_latency = File::create("end_to_end_latency.csv").unwrap();
     // let mut end_to_end_latency:Duration = Duration::new(0, 0);
@@ -209,7 +218,7 @@ pub fn test_handover() {
             handover_latency += *latency;
     
             // New SAP verify the zk proof and compute the session key
-            (vres,time) = zk_ka::runzkkatest(new_ue_public_num.to_bytes().to_vec());
+           // (vres,time) = zk_ka::runzkkatest(new_ue_public_num.to_bytes().to_vec());
             handover_latency += time;
     
             if vres {

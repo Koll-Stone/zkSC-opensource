@@ -170,8 +170,8 @@ where
 
 
 
-pub fn runzkkatest(public_num: Vec<u8>) -> (bool, Duration) {
-    let loopnum=10;
+pub fn runzkkatest(public_num: Vec<u8>) -> (bool, Duration, Duration) {
+    let loopnum= 50;
     let mut total_time = Duration::new(0, 0);
     let mut proof_time = Duration::new(0, 0);
     let mut verify_time = Duration::new(0, 0);
@@ -218,7 +218,7 @@ pub fn runzkkatest(public_num: Vec<u8>) -> (bool, Duration) {
     //println!("verify_proof for key agreement took: {:?} in 1 runnings, res {}", duration, vres);
     let vres = groth16::verify_proof(&vk, &proof, &all_inputs).unwrap();
     total_time = proof_time + verify_time;
-    (vres, total_time)
+    (vres, proof_time, verify_time)
 }
 
 #[cfg(test)]
