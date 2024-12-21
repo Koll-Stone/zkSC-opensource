@@ -36,42 +36,54 @@ lazy_static! {
 
 
 
-
-
 pub fn test_aka() {
 
-    let mut f_end_to_end_latency = File::create("end_to_end_latency.csv").unwrap();
-    let mut end_to_end_latency:Duration = Duration::new(0, 0);
-    let mut time:Duration = Duration::new(0, 0);
-    let mut vres: bool = false;
-    let mut start = Instant::now(); 
-    let mut duration = Duration::new(0, 0);
     let mut proof_time = Duration::new(0, 0);
     let mut verify_time = Duration::new(0, 0);
-    let mut i = 0;
-
-    for latency in SPACE_GROUND_LATENCY.iter() {
-        let mut accres = 0;
-        let mut loopnum = 5;
-        for _ in 0..loopnum {
-            end_to_end_latency = Duration::new(0, 0);
-            println!("********     The {}th test begin !!!!      ********", i);
-            println!("The space-ground latency is {:?}", latency);
-            //UE prepare the private_num and public_num using in the key agreement
-            let ue_private_num = ECDHNISTP256::generate_private_key([13; 32]);
-            let ue_public_num = ECDHNISTP256::generate_public_key(&ue_private_num);
-
-            //UE create the proof(include attr and k)
-            println!("Create and Verifying Proof!!!!");
-            (vres, proof_time, verify_time) = zk_ac::runzkactest(ue_public_num.to_bytes().to_vec());
-            end_to_end_latency += time;
-            if vres {
+    let mut vres: bool = false;
+    let ue_private_num = ECDHNISTP256::generate_private_key([13; 32]);
+    let ue_public_num = ECDHNISTP256::generate_public_key(&ue_private_num);
+    (vres, proof_time, verify_time) = zk_ac::runzkactest(ue_public_num.to_bytes().to_vec());
+    if vres {
                 
-            } else {
-                println!("The ac proof is invalid");
-            }
-            println!("the proof time taken is {:?}", proof_time);
-            println!("the verify time taken is {:?}", verify_time);
+    } else {
+        println!("The ac proof is invalid");
+    }
+    println!("the proof time taken is {:?} from 50 times running", proof_time);
+    println!("the verify time taken is {:?} from 50 times running", verify_time);
+
+    // let mut f_end_to_end_latency = File::create("end_to_end_latency.csv").unwrap();
+    // let mut end_to_end_latency:Duration = Duration::new(0, 0);
+    // let mut time:Duration = Duration::new(0, 0);
+    // let mut vres: bool = false;
+    // let mut start = Instant::now(); 
+    // let mut duration = Duration::new(0, 0);
+    // let mut proof_time = Duration::new(0, 0);
+    // let mut verify_time = Duration::new(0, 0);
+    // let mut i = 0;
+
+    // for latency in SPACE_GROUND_LATENCY.iter() {
+    //     let mut accres = 0;
+    //     let mut loopnum = 5;
+    //     for _ in 0..loopnum {
+    //         end_to_end_latency = Duration::new(0, 0);
+    //         println!("********     The {}th test begin !!!!      ********", i);
+    //         println!("The space-ground latency is {:?}", latency);
+    //         //UE prepare the private_num and public_num using in the key agreement
+    //         let ue_private_num = ECDHNISTP256::generate_private_key([13; 32]);
+    //         let ue_public_num = ECDHNISTP256::generate_public_key(&ue_private_num);
+
+    //         //UE create the proof(include attr and k)
+    //         println!("Create and Verifying Proof!!!!");
+    //         (vres, proof_time, verify_time) = zk_ac::runzkactest(ue_public_num.to_bytes().to_vec());
+    //         end_to_end_latency += time;
+    //         if vres {
+                
+    //         } else {
+    //             println!("The ac proof is invalid");
+    //         }
+    //         println!("the proof time taken is {:?}", proof_time);
+    //         println!("the verify time taken is {:?}", verify_time);
             // // UE send the public_num to AP, add a space-groud link latency
             // end_to_end_latency += *latency;
 
@@ -117,24 +129,12 @@ pub fn test_aka() {
             // assert_eq!(ue_session_key, ap_session_key);
 
             // accres += end_to_end_latency.as_millis();
-        }
+        
 
-        writeln!(f_end_to_end_latency, "{:?}", accres/loopnum).unwrap();
-        i += 1;
-    }
+        // writeln!(f_end_to_end_latency, "{:?}", accres/loopnum).unwrap();
+        // i += 1;
+    //}
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -241,6 +241,7 @@ pub fn test_handover() {
 #[cfg(test)]
 mod test{
     use crate::zk_akkh::test_aka;
+
     #[test]
     pub fn run_test_aka(){
         test_aka();

@@ -1,1 +1,1 @@
-cargo test --package zkcreds --lib --release -- zk_akkh::test::run_test_aka --exact --nocapture
+cargo test --package zkcreds --lib --release -- zk_akkh::test::run_test_ac --exact --nocapture
