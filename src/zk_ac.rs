@@ -92,7 +92,6 @@ where
     pub ik2: H::Output,
     // New add time period
     pub tp: H::Output,
-    pub k3: u8,
     pub temp_atr: H::Output,
     pub temp_tp: H::Output,
     
@@ -125,7 +124,6 @@ ZkacProver<BlsFr, Bls12PoseidonCommitter, Bls12PoseidonCommitter, Bls12PoseidonC
         _marker: PhantomData,
         // New add tp
         tp: Default::default(),
-        k3: 8u8,
         temp_atr: Default::default(),
         temp_tp: Default::default(),
     };
@@ -175,9 +173,11 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
     let input_tp: Vec<u8> = vec![8_u8];
     let tp = hasher.hash(&input_tp.to_field_elements().unwrap()).unwrap();
     
-    let k3 = 8u8;
-    attr.push(k3.clone());
-    let temp_attr = <Bls12PoseidonCommitter as CommitmentScheme>::commit(&(), &attr, &nonce).unwrap();
+    let mut two_attr: Vec<u8> = Vec::new();
+    two_attr.extend(&attr);
+    two_attr.extend(&attr);
+
+    let temp_attr = <Bls12PoseidonCommitter as CommitmentScheme>::commit(&(), &two_attr, &nonce).unwrap();
 
     
     
@@ -228,7 +228,7 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
         tp: tp,
         temp_atr: temp_attr,
         temp_tp: temp_tp,
-        k3: 8u8,
+        
 
         _marker: PhantomData,
     };
@@ -306,8 +306,8 @@ where
 
         // concate the k3 and attr
         let mut temp_attr_var = attr_u8_var.clone();
-        temp_attr_var.push(UInt8::new_witness(ns!(cs, "k3"), || Ok(self.k3)).unwrap());
-
+        temp_attr_var.extend(attr_u8_var.clone());
+        
         let mut ik1_u8_var: Vec<UInt8<ConstraintF>> = vec![];
         ik1_u8_var.push(UInt8::new_witness(ns!(cs, "ik1 u8 component"), || Ok(self.ik1)).unwrap());
         let leaf_param_var: UnitVar<ConstraintF> = UnitVar::default();
