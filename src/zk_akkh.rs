@@ -46,6 +46,8 @@ pub fn test_aka() {
     let mut vres: bool = false;
     let mut start = Instant::now(); 
     let mut duration = Duration::new(0, 0);
+    let mut proof_time = Duration::new(0, 0);
+    let mut verify_time = Duration::new(0, 0);
     let mut i = 0;
 
     for latency in SPACE_GROUND_LATENCY.iter() {
@@ -61,60 +63,60 @@ pub fn test_aka() {
 
             //UE create the proof(include attr and k)
             println!("Create and Verifying Proof!!!!");
-            (vres, time) = zk_ac::runzkactest(ue_public_num.to_bytes().to_vec());
+            (vres, proof_time, verify_time) = zk_ac::runzkactest(ue_public_num.to_bytes().to_vec());
             end_to_end_latency += time;
             if vres {
                 
             } else {
                 println!("The ac proof is invalid");
             }
-            println!("the attr proof time taken is {:?}", time);
+            println!("the proof time taken is {:?}", proof_time);
+            println!("the verify time taken is {:?}", verify_time);
+            // // UE send the public_num to AP, add a space-groud link latency
+            // end_to_end_latency += *latency;
 
-            // UE send the public_num to AP, add a space-groud link latency
-            end_to_end_latency += *latency;
+            // // AP generate the private_num and public_num
+            // let (ap_sk, ap_vk) = ecdsa::generate_keypair();
+            // start = Instant::now();
+            // let ap_private_num = ECDHNISTP256::generate_private_key([14; 32]);
+            // let ap_public_num = ECDHNISTP256::generate_public_key(&ap_private_num);
+            // let ap_signature = ecdsa::sign_u8_type(&ap_sk, &ap_public_num.to_bytes());
+            // duration = start.elapsed();
+            // end_to_end_latency += duration;
+            // println!("the sign signature time taken is {:?}", duration);
 
-            // AP generate the private_num and public_num
-            let (ap_sk, ap_vk) = ecdsa::generate_keypair();
-            start = Instant::now();
-            let ap_private_num = ECDHNISTP256::generate_private_key([14; 32]);
-            let ap_public_num = ECDHNISTP256::generate_public_key(&ap_private_num);
-            let ap_signature = ecdsa::sign_u8_type(&ap_sk, &ap_public_num.to_bytes());
-            duration = start.elapsed();
-            end_to_end_latency += duration;
-            println!("the sign signature time taken is {:?}", duration);
+            // // AP send the signature to UE, add a space-groud link latency
+            // end_to_end_latency += *latency;
 
-            // AP send the signature to UE, add a space-groud link latency
-            end_to_end_latency += *latency;
+            // // UE verify the signature and send the zk proof(k2) to AP
+            // start = Instant::now();
+            // let mut is_valid: bool = ecdsa::verify_signature(&ap_vk, &ap_public_num.to_bytes(), &ap_signature);
+            // duration = start.elapsed();
+            // end_to_end_latency += duration;
+            // println!("the verify signature time taken is {:?}", duration);
 
-            // UE verify the signature and send the zk proof(k2) to AP
-            start = Instant::now();
-            let mut is_valid: bool = ecdsa::verify_signature(&ap_vk, &ap_public_num.to_bytes(), &ap_signature);
-            duration = start.elapsed();
-            end_to_end_latency += duration;
-            println!("the verify signature time taken is {:?}", duration);
-
-            (vres, time) = zk_ka::runzkkatest(ue_public_num.to_bytes().to_vec());
-            if vres {
-                end_to_end_latency += time;
-            } else {
-                println!("The ka proof is invalid");
-            }
-            println!("the ka proof time taken is {:?}", time);
+            // (vres, time) = zk_ka::runzkkatest(ue_public_num.to_bytes().to_vec());
+            // if vres {
+            //     end_to_end_latency += time;
+            // } else {
+            //     println!("The ka proof is invalid");
+            // }
+            // println!("the ka proof time taken is {:?}", time);
             
-            // Send ka proof to AP, add a space-groud link latency
-            end_to_end_latency += *latency; 
+            // // Send ka proof to AP, add a space-groud link latency
+            // end_to_end_latency += *latency; 
 
             
 
-            // AP & UE generate the session key(put together to facilitate time computing)
-            start = Instant::now();
-            let ue_session_key = ECDHNISTP256::generate_shared_secret(&ue_private_num, &ap_public_num);
-            let ap_session_key = ECDHNISTP256::generate_shared_secret(&ap_private_num, &ue_public_num);
-            duration = start.elapsed();
-            end_to_end_latency += duration;
-            assert_eq!(ue_session_key, ap_session_key);
+            // // AP & UE generate the session key(put together to facilitate time computing)
+            // start = Instant::now();
+            // let ue_session_key = ECDHNISTP256::generate_shared_secret(&ue_private_num, &ap_public_num);
+            // let ap_session_key = ECDHNISTP256::generate_shared_secret(&ap_private_num, &ue_public_num);
+            // duration = start.elapsed();
+            // end_to_end_latency += duration;
+            // assert_eq!(ue_session_key, ap_session_key);
 
-            accres += end_to_end_latency.as_millis();
+            // accres += end_to_end_latency.as_millis();
         }
 
         writeln!(f_end_to_end_latency, "{:?}", accres/loopnum).unwrap();

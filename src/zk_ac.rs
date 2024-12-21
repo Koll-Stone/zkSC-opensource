@@ -383,7 +383,7 @@ where
 
 
 
-pub fn runzkactest(public_num: Vec<u8>) -> (bool, Duration) {
+pub fn runzkactest(public_num: Vec<u8>) -> (bool, Duration, Duration) {
     let _rng = ark_std::test_rng();
     let mut total_time: Duration = Duration::new(0, 0);
     let mut proof_time: Duration = Duration::new(0, 0);
@@ -431,7 +431,8 @@ pub fn runzkactest(public_num: Vec<u8>) -> (bool, Duration) {
     let vres = groth16::verify_proof(&vk, &proof, &all_inputs).unwrap();
     verify_time = duration / loopnum;
     total_time = proof_time + verify_time;
-    (vres, total_time)
+
+    (vres, proof_time, verify_time)
     
 }
 
