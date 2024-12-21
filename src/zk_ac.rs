@@ -232,7 +232,7 @@ pub fn get_zkacprover_with_value(public_num: Vec<u8>) -> ZkacproverWithValue {
         tmp.push(x);
     }
     let acpolicy_input = tmp;
-    // Add tp input
+    // Add tp input 
     let tp_input = tp.to_field_elements().unwrap();
 
     ZkacproverWithValue {
@@ -275,10 +275,10 @@ where
             all_roots_var.push(y);
         }
         
-        let temp_var = HG::OutputVar::new_input(ns!(cs, "temp var"), || Ok(self.temp_hash.clone()))?;
-        let tp_var = HG::OutputVar::new_input(ns!(cs, "tp var"), || Ok(self.tp.clone()))?;
         let res1_var = HG::OutputVar::new_input(ns!(cs, "res1 var"), || Ok(self.res1.clone()))?;
         let res2_var = HG::OutputVar::new_input(ns!(cs, "res2 var"), || Ok(self.res2.clone()))?;
+        let temp_var = HG::OutputVar::new_input(ns!(cs, "temp var"), || Ok(self.temp_hash.clone()))?;
+        let tp_var = HG::OutputVar::new_input(ns!(cs, "tp var"), || Ok(self.tp.clone()))?;
 
         // **************** witness ****************
         let root_var = HG::OutputVar::new_witness(ns!(cs, "root hattr var"), || Ok(self.root_star.clone()))?;
@@ -343,7 +343,7 @@ where
 
         let tmp1 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &hash_of_attr.to_bytes().unwrap(), &tp_var.to_bytes().unwrap()).unwrap();
         tmp1.enforce_equal(&temp_var)?;
-    
+
         let tmp2 = <HG as TwoToOneCRHGadget<H, ConstraintF>>::evaluate(&crh_param_var, &temp_var.to_bytes().unwrap(), &hash_of_ik1.to_bytes().unwrap()).unwrap();
         tmp2.enforce_equal(&res1_var)?;
 
@@ -414,7 +414,7 @@ pub fn runzkactest(public_num: Vec<u8>) -> (bool, Duration) {
     let zkacwithvalue = get_zkacprover_with_value(public_num);
     let mut all_inputs = zkacwithvalue.acpolicy_input;
     all_inputs.push(zkacwithvalue.ths_input);
-    all_inputs = [all_inputs, zkacwithvalue.all_roots_input, zkacwithvalue.res1_input, zkacwithvalue.res2_input, zkacwithvalue.tp_input, zkacwithvalue.temp_input].concat();
+    all_inputs = [all_inputs, zkacwithvalue.all_roots_input, zkacwithvalue.res1_input, zkacwithvalue.res2_input, zkacwithvalue.temp_input, zkacwithvalue.tp_input].concat();
     // let mut start = Instant::now();
     // let proof = groth16::create_random_proof(zkacwithvalue.circuit, &pk, &mut rng).unwrap();
     // let duration = start.elapsed();
